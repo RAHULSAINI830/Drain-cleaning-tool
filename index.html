@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Service Selection Tool</title>
+    <style>
+        /* General Styling */
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+        }
+
+        h1, h2 {
+            text-align: center;
+            color: #333;
+        }
+
+        .question, .result {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        .question.active, .result.active {
+            display: block;
+        }
+
+        .options {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .card {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 20px;
+            cursor: pointer;
+            width: 180px;
+            text-align: center;
+            transition: all 0.3s;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .card:hover {
+            background-color: #e40f1e;
+            color: #fff;
+            transform: scale(1.05);
+        }
+
+        .card i {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: #e40f1e;
+        }
+
+        .card:hover i {
+            color: #fff;
+        }
+
+        button {
+            background-color: #253f58;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #e40f1e;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navbar -->
+    <div id="custom-navbar"></div>
+
+    <h1>Dynamic Service Selection Tool</h1>
+
+    <!-- Question Flow -->
+    <div class="question active" id="question1">
+        <h2>What Type of Service/Issue Are You Facing?</h2>
+        <div class="options">
+            <div class="card" onclick="selectOption(1, 'cleaning')">Cleaning Services</div>
+            <div class="card" onclick="selectOption(1, 'storm')">Storm Drain Blockage</div>
+            <div class="card" onclick="selectOption(1, 'shower')">Slow Draining Shower/Bathtub</div>
+            <div class="card" onclick="selectOption(1, 'sink')">Clogged Sink</div>
+            <div class="card" onclick="selectOption(1, 'toilet')">Backed Up Toilet</div>
+            <div class="card" onclick="selectOption(1, 'sewer')">Sewer Line Back-Up</div>
+            <div class="card" onclick="selectOption(1, 'other')">Other: Specify</div>
+        </div>
+    </div>
+
+    <div class="question" id="stormDrainOptions">
+        <h2>Storm Drain Blockage - Choose Your Service</h2>
+        <div class="options">
+            <div class="card" onclick="selectOption(2, 'repair')">Repair</div>
+            <div class="card" onclick="selectOption(2, 'install')">New Install/Replacement</div>
+        </div>
+    </div>
+
+    <div class="question" id="repairOptions">
+        <h2>Storm Drain Repair - Onsite Inspection Required?</h2>
+        <div class="options">
+            <div class="card" onclick="selectPropertyOption('repairYes')">Yes</div>
+            <div class="card" onclick="selectPropertyOption('repairNo')">No</div>
+        </div>
+    </div>
+
+    <div class="question" id="installOptions">
+        <h2>Install/Replacement - Onsite Inspection Required?</h2>
+        <div class="options">
+            <div class="card" onclick="selectPropertyOption('installYes')">Yes</div>
+            <div class="card" onclick="selectPropertyOption('installNo')">No</div>
+        </div>
+    </div>
+
+    <div class="question" id="propertyOptions">
+        <h2>What Type of Property Is It?</h2>
+        <div class="options">
+            <div class="card" onclick="showResult('Residential')">Residential</div>
+            <div class="card" onclick="showResult('Commercial')">Commercial</div>
+            <div class="card" onclick="showResult('Industry')">Industry</div>
+        </div>
+    </div>
+
+    <!-- Result -->
+    <div class="result" id="result">
+        <h2>Your Service Details</h2>
+        <p id="result-text"></p>
+        <button onclick="startOver()">Start Over</button>
+    </div>
+
+    <!-- Footer -->
+    <div id="custom-footer"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const navbarContainer = document.getElementById('custom-navbar');
+            if (navbarContainer) {
+                const shadowRoot = navbarContainer.attachShadow({ mode: 'open' });
+
+                shadowRoot.innerHTML = `
+                    <style>
+                        .navbar {
+                            background-color: #253f58;
+                            padding: 20px;
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                        }
+
+                        .navbar img {
+                            max-height: 30px;
+                        }
+
+                        .navbar a {
+                            color: white;
+                            text-decoration: none;
+                            font-size: 1em;
+                            margin-left: 20px;
+                        }
+
+                        .navbar a:hover {
+                            text-decoration: underline;
+                        }
+
+                        .phone-links {
+                            display: flex;
+                            align-items: center;
+                        }
+
+                        .phone-links i {
+                            margin-right: 8px;
+                            color: #E40F1E;
+                        }
+                        @media only screen and (max-width: 600px){
+                            .navbar img {
+    max-height: 16px;
+}
+                        .navbar a {
+                        font-size: 0.6em;
+                        }
+                        }
+                    </style>
+                    <div class="navbar">
+                        <div class="logo">
+                            <img src="https://johnowensservices.com/wp-content/uploads/2021/05/Logo.png" alt="Logo">
+                        </div>
+                        <div class="phone-links">
+                            <a href="tel:+14159426565">
+                                <i class="fas fa-phone-alt"></i> (415) 942-6565
+                            </a>
+                            <a href="tel:+17074523464">
+                                <i class="fas fa-phone-alt"></i> (707) 452-3464
+                            </a>
+                        </div>
+                    </div>
+                `;
+            }
+        });
+        // Function to scroll to the embedded form
+        function scrollToForm() {
+            const formElement = document.getElementById('get-in-touch');
+            formElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        document.addEventListener('DOMContentLoaded', function () {
+            const footerContainer = document.getElementById('custom-footer');
+            if (footerContainer) {
+                const shadowRoot = footerContainer.attachShadow({ mode: 'open' });
+
+                shadowRoot.innerHTML = `
+            <style>
+                .custom-footer-wrapper .custom-footer {
+                    background-color: #253f58 !important;
+                    color: #fff !important;
+                    padding-top: 40px !important;
+                    padding-bottom: 0 !important;
+                    padding-right: 0 !important;
+                    padding-left: 0 !important;
+                    overflow-x: hidden;
+                }
+
+                .custom-footer-wrapper .custom-footer-container {
+                    display: flex !important;
+                    justify-content: space-around !important;
+                    align-items: flex-start !important;
+                    max-width: 1200px !important;
+                    margin: auto !important;
+                    padding: 0 20px !important;
+                }
+
+                .custom-footer-wrapper .custom-footer-section {
+                    flex-basis: 30% !important;
+                    display: flex !important;
+                    flex-direction: column !important;
+                    justify-content: flex-start !important;
+                }
+
+                .custom-footer-wrapper .custom-footer-logo {
+                    width: 270px !important;
+                    height: 30px !importent;
+                    margin-bottom: 20px !important;
+                }
+
+                .custom-footer-wrapper .custom-footer-image,
+                .custom-footer-wrapper .custom-footer-images img {
+                    width: 150px !important;
+                    margin-bottom: 20px !important;
+                }
+
+                .custom-footer-wrapper .custom-footer-section h3 {
+                    font-size: 30px !important;
+                    margin-bottom: 10px !important;
+                    margin-top: 0 !important;
+                }
+
+                .custom-footer-wrapper .custom-footer-section p {
+                    font-size: 17px !important;
+                    line-height: 1 !important;
+                    color: white;
+                }
+
+                .custom-footer-wrapper .custom-footer-bottom {
+                    background-color: rgba(0, 0, 0, 0.2) !important;
+                    text-align: center !important;
+                    padding: 15px 0 !important;
+                    font-size: 14px !important;
+                }
+
+                .custom-footer-wrapper .custom-footer-bottom p {
+                    color: white;
+                }
+
+                .custom-footer-wrapper .custom-footer-bottom a {
+                    color: #ee5566 !important;
+                    text-decoration: none !important;
+                    font-weight: bold !important;
+                }
+
+                .custom-footer-wrapper .custom-footer-bottom a:hover {
+                    text-decoration: underline !important;
+                }
+                @media only screen and (max-width: 600px){
+                    .custom-footer-wrapper .custom-footer-image,
+                    .custom-footer-wrapper .custom-footer-images img {
+                    width: 80px !important;
+                   
+                }
+                .custom-footer-wrapper .custom-footer-logo {
+                    width: 100px !important;
+                    height: 20px;
+                    }
+                    .custom-footer-wrapper .custom-footer-section h3 {
+                        font-size: 20px !important;
+            }
+                        .custom-footer-wrapper .custom-footer-section p {
+    font-size: 8px !important;
+            }
+    
+                }
+                  
+            </style>
+            <div class="custom-footer-wrapper">
+                <footer class="custom-footer">
+                    <div class="custom-footer-container">
+                        <!-- Logo and Images Section -->
+                        <div class="custom-footer-section">
+                            <img src="https://johnowensservices.com/wp-content/uploads/brand-logo.png" alt="Logo"
+                                class="custom-footer-logo">
+                            <img src="https://johnowensservices.com/wp-content/uploads/SINCE-1968-1.png" alt="Another Image"
+                                class="custom-footer-image">
+                        </div>
+
+                        <!-- Contact Information Section -->
+                        <div class="custom-footer-section">
+                            <h3>Contact Us</h3>
+                            <p>San Rafael: <a href="tel:+14159426565" style="color: white; text-decoration: none;"><strong>(415)
+                                        942-6565</strong></a></p>
+                            <p>Santa Rosa: <a href="tel:+17074523464" style="color: white; text-decoration: none;"><strong>(707)
+                                        452-3464</strong></a></p>
+                            <p>Petaluma: <a href="tel:+17072032906" style="color: white; text-decoration: none;"><strong>(707)
+                                        203-2906</strong></a></p>
+                        </div>
+
+                        <!-- Images Section -->
+                        <div class="custom-footer-section custom-footer-images">
+                            <img src="https://johnowensservices.com/wp-content/uploads/Untitled-design-14-scaled.webp"
+                                alt="Image 1">
+                            <img src="https://johnowensservices.com/wp-content/uploads/WhatsApp-Image-2024-08-27-at-3.33.50-AM.jpeg"
+                                alt="Image 2">
+                            <img src="https://seal-goldengate.bbb.org/seals/blue-seal-200-65-bbb-387713.png" alt="Image 3">
+                        </div>
+                    </div>
+                    <div class="custom-footer-bottom">
+                        <p>&copy; 2024 Your Website | Designed by <a href="https://zentrades.pro/">ZenTrades</a></p>
+                    </div>
+                </footer>
+            </div>
+        `;
+            }
+        });
+        let stepHistory = [];
+
+        function selectOption(step, choice) {
+            stepHistory.push(step);
+            document.querySelector('.question.active').classList.remove('active');
+
+            if (choice === 'storm') {
+                document.getElementById('stormDrainOptions').classList.add('active');
+            } else if (choice === 'repair') {
+                document.getElementById('repairOptions').classList.add('active');
+            } else if (choice === 'install') {
+                document.getElementById('installOptions').classList.add('active');
+            }
+        }
+
+        function selectPropertyOption(nextStep) {
+            document.querySelector('.question.active').classList.remove('active');
+            document.getElementById('propertyOptions').classList.add('active');
+        }
+
+        function showResult(propertyType) {
+            document.querySelector('.question.active').classList.remove('active');
+            document.getElementById('result').classList.add('active');
+            document.getElementById('result-text').innerText = `Service Selected for ${propertyType} Property.`;
+        }
+
+        function startOver() {
+            stepHistory = [];
+            document.querySelector('.question.active').classList.remove('active');
+            document.getElementById('question1').classList.add('active');
+            document.getElementById('result').classList.remove('active');
+        }
+
+        // Navbar and Footer Injection
+        document.getElementById('custom-navbar').innerHTML = `
+            <div style="background-color:#253f58; padding:15px; color:white; text-align:center;">
+                <h3>Dynamic Navbar</h3>
+            </div>
+        `;
+
+        document.getElementById('custom-footer').innerHTML = `
+            <div style="background-color:#253f58; padding:15px; color:white; text-align:center;">
+                <p>&copy; 2024 Designed by ZenTrades</p>
+            </div>
+        `;
+    </script>
+</body>
+
+</html>
